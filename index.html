@@ -35,8 +35,7 @@
 body {
   font-family: 'LXGW WenKai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;
-  background: var(--bg-gradient);
-  background-attachment: fixed;
+  background: url('wallpaper.jpg') center / cover no-repeat fixed;
   color: var(--text);
   min-height: 100vh; min-height: 100dvh;
   line-height: 1.6;
@@ -66,7 +65,8 @@ body::before {
 /* ===== Splash ===== */
 #splash {
   position: fixed; inset: 0; z-index: 99999;
-  background: var(--bg-gradient);
+  background: rgba(250,246,242,0.92);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   transition: opacity 0.6s ease, visibility 0.6s ease;
@@ -219,10 +219,6 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
 
 /* ===== Chat Page ===== */
 .chat-page {
-  background-image: url('chat-bg.jpg');
-  background-size: cover;
-  background-position: center bottom;
-  background-repeat: no-repeat;
 }
 .chat-name {
   position: absolute;
@@ -293,31 +289,33 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
   background: rgba(232,222,205,0.88);
   border-bottom-right-radius: 6px;
   color: var(--text);
-  padding-right: 60px;
+  padding-right: 36px;
 }
 .chat-msg.user .chat-msg-content::after {
   content: '';
-  position: absolute; right: -2px; bottom: 0;
-  width: 90px; height: 72px;
+  position: absolute; right: -2px; bottom: -4px;
+  width: 44px; height: 36px;
   background: url('rose-deco.png') no-repeat center;
   background-size: contain;
   pointer-events: none;
   z-index: 10;
+  mix-blend-mode: multiply;
 }
 .chat-msg.ai .chat-bubble {
   background: rgba(250,247,242,0.9);
   border-bottom-left-radius: 6px;
   color: var(--text);
-  padding-right: 50px;
+  padding-right: 30px;
 }
 .chat-msg.ai .chat-msg-content::after {
   content: '';
-  position: absolute; right: -12px; bottom: 0;
-  width: 70px; height: 44px;
+  position: absolute; right: -6px; bottom: -4px;
+  width: 36px; height: 24px;
   background: url('branch-deco.png') no-repeat center;
   background-size: contain;
   pointer-events: none;
   z-index: 10;
+  mix-blend-mode: multiply;
 }
 
 /* Thinking */
@@ -409,7 +407,7 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
 .foyer-header {
   padding: calc(14px + env(safe-area-inset-top)) 16px 12px 60px;
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: rgba(255,252,248,0.45);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
 .foyer-title {
