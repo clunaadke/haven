@@ -271,14 +271,13 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
 /* Message content wrapper */
 .chat-msg-content { display: flex; flex-direction: column; max-width: 75%; }
 .chat-msg.user .chat-msg-content { align-items: flex-end; }
-.chat-msg-meta {
+.chat-msg-ts {
   font-size: 10px; color: var(--text-light);
-  margin-bottom: 3px; padding: 0 6px;
-  display: flex; gap: 6px; align-items: center;
+  margin-top: 3px; padding: 0 6px;
+  font-family: 'Crimson Pro', serif;
+  letter-spacing: 0.5px;
 }
-.chat-msg.user .chat-msg-meta { justify-content: flex-end; }
-.chat-msg-time { font-family: 'Crimson Pro', serif; letter-spacing: 0.5px; }
-.chat-msg-name { font-weight: 500; color: var(--text-dim); }
+.chat-msg.user .chat-msg-ts { text-align: right; }
 
 /* Bubbles */
 .chat-bubble {
@@ -623,8 +622,8 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
         <div class="chat-msg ai">
           <div class="chat-avatar"><span class="settings-avatar-ph">R</span></div>
           <div class="chat-msg-content">
-            <div class="chat-msg-meta"><span class="chat-msg-name">Rhysel</span></div>
             <div class="chat-bubble">Haven is live.</div>
+            <div class="chat-msg-ts">00:00</div>
           </div>
         </div>
       </div>
@@ -886,23 +885,17 @@ function appendMessage(role, text, thinking) {
   var content = document.createElement('div');
   content.className = 'chat-msg-content';
 
-  var meta = document.createElement('div');
-  meta.className = 'chat-msg-meta';
-  var hh = String(now.getHours()).padStart(2,'0');
-  var mi = String(now.getMinutes()).padStart(2,'0');
-  var timeStr = hh + ':' + mi;
-  var nameStr = role === 'ai' ? 'Rhysel' : '你';
-  if (role === 'ai') {
-    meta.innerHTML = '<span class="chat-msg-name">' + nameStr + '</span><span class="chat-msg-time">' + timeStr + '</span>';
-  } else {
-    meta.innerHTML = '<span class="chat-msg-time">' + timeStr + '</span><span class="chat-msg-name">' + nameStr + '</span>';
-  }
-  content.appendChild(meta);
-
   var bubble = document.createElement('div');
   bubble.className = 'chat-bubble';
   bubble.innerHTML = escHtml(text);
   content.appendChild(bubble);
+
+  var hh = String(now.getHours()).padStart(2,'0');
+  var mi = String(now.getMinutes()).padStart(2,'0');
+  var ts = document.createElement('div');
+  ts.className = 'chat-msg-ts';
+  ts.textContent = hh + ':' + mi;
+  content.appendChild(ts);
 
   if (role === 'ai') {
     row.appendChild(avatar);
