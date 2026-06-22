@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#f3f1eb">
 <meta name="apple-mobile-web-app-title" content="Haven">
 <title>Haven</title>
+<script>document.documentElement.style.minHeight=screen.height+'px';</script>
 <link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -34,8 +35,7 @@
 
 html {
   background: #f3f1eb url('wallpaper.jpg') center / cover no-repeat;
-  height: 100%;
-  min-height: var(--screen-h, 100vh);
+  height: calc(100% + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
 }
 body {
   height: 100%; overflow: hidden;
@@ -776,7 +776,6 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
 <input type="file" id="avatar-file-input" accept="image/*" style="display:none">
 
 <script>
-document.documentElement.style.setProperty('--screen-h', screen.height + 'px');
 var lastMsgTime = null;
 var DIVIDER_GAP = 30 * 60 * 1000;
 
