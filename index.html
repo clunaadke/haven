@@ -43,8 +43,9 @@ body {
 }
 #wallpaper-bg {
   position: fixed;
-  top: -5px; left: -5px; right: -5px; bottom: -5px;
-  width: calc(100% + 10px); height: calc(100% + 10px);
+  top: calc(-1 * env(safe-area-inset-top, 60px));
+  left: 0; right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom, 60px));
   object-fit: cover;
   z-index: 0;
   pointer-events: none;
@@ -52,7 +53,10 @@ body {
 
 /* ===== Splash ===== */
 #splash {
-  position: fixed; inset: 0; z-index: 99999;
+  position: fixed; z-index: 99999;
+  top: calc(-1 * env(safe-area-inset-top, 60px));
+  left: 0; right: 0;
+  bottom: calc(-1 * env(safe-area-inset-bottom, 60px));
   background: #f3f1eb;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
