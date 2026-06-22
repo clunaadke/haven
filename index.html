@@ -100,6 +100,7 @@ body::before {
   overflow: hidden;
 }
 .page.active { display: flex; flex-direction: column; }
+.chat-page { bottom: 0; }
 
 /* ===== Global Menu Button ===== */
 .menu-btn {
@@ -267,13 +268,26 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
   width: 100%; height: 100%; object-fit: cover;
 }
 
+/* Message content wrapper */
+.chat-msg-content { display: flex; flex-direction: column; max-width: 75%; }
+.chat-msg.user .chat-msg-content { align-items: flex-end; }
+.chat-msg-meta {
+  font-size: 10px; color: var(--text-light);
+  margin-bottom: 3px; padding: 0 6px;
+  display: flex; gap: 6px; align-items: center;
+}
+.chat-msg.user .chat-msg-meta { justify-content: flex-end; }
+.chat-msg-time { font-family: 'Crimson Pro', serif; letter-spacing: 0.5px; }
+.chat-msg-name { font-weight: 500; color: var(--text-dim); }
+
 /* Bubbles */
 .chat-bubble {
-  max-width: 75%; padding: 10px 14px;
+  padding: 10px 14px;
   border-radius: 20px;
   font-size: var(--chat-font-size);
   line-height: 1.6; word-break: break-word;
   box-shadow: 0 1px 6px rgba(165,155,140,0.08);
+  position: relative;
 }
 .chat-msg.user .chat-bubble {
   background: rgba(232,222,205,0.88);
@@ -328,37 +342,41 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
 /* Input bar */
 .chat-input-bar {
   display: flex; align-items: center; gap: 8px;
-  padding: 10px 12px 6px;
-  background: rgba(255,252,248,0.75);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
+  padding: 10px 12px calc(var(--dock-clearance) + 4px) 12px;
+  background: none;
 }
 .chat-input-actions { display: flex; gap: 4px; }
 .chat-input-actions button {
-  width: 36px; height: 36px; border: none; background: none;
+  width: 38px; height: 38px; border: none;
+  background: rgba(255,252,248,0.55);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   border-radius: 50%; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   color: var(--text-dim); transition: background 0.2s;
 }
-.chat-input-actions button:hover { background: var(--accent-glow); }
+.chat-input-actions button:hover { background: rgba(255,252,248,0.7); }
 .chat-input-actions button svg {
   width: 20px; height: 20px; stroke: currentColor; fill: none;
   stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
 }
 .chat-input {
-  flex: 1; border: 1px solid var(--border);
-  background: rgba(255,252,248,0.8); border-radius: 20px;
-  padding: 8px 16px; font-size: 15px; font-family: inherit;
+  flex: 1; border: 1px solid rgba(200,190,170,0.25);
+  background: rgba(255,252,248,0.75);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 22px;
+  padding: 9px 16px; font-size: 15px; font-family: inherit;
   color: var(--text); outline: none; resize: none;
   max-height: 120px; line-height: 1.4;
+  box-shadow: 0 1px 6px rgba(165,155,140,0.08);
 }
 .chat-input::placeholder { color: var(--text-light); }
 .chat-input:focus { border-color: var(--border-strong); }
 .chat-send {
-  width: 36px; height: 36px; border: none;
+  width: 38px; height: 38px; border: none;
   background: var(--accent); border-radius: 50%;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: opacity 0.2s;
+  box-shadow: 0 2px 8px rgba(138,125,114,0.2);
 }
 .chat-send:hover { opacity: 0.85; }
 .chat-send svg {
@@ -582,8 +600,11 @@ body.on-terminal .menu-btn svg { stroke: rgba(255,255,255,0.55); }
       <div class="chat-name">Rhysel</div>
       <div class="chat-messages" id="chat-messages">
         <div class="chat-msg ai">
-          <div class="chat-avatar" id="demo-ai-avatar"><span class="settings-avatar-ph">R</span></div>
-          <div class="chat-bubble">Haven is live.</div>
+          <div class="chat-avatar"><span class="settings-avatar-ph">R</span></div>
+          <div class="chat-msg-content">
+            <div class="chat-msg-meta"><span class="chat-msg-name">Rhysel</span></div>
+            <div class="chat-bubble">Haven is live.</div>
+          </div>
         </div>
       </div>
       <div class="chat-input-bar">
@@ -841,15 +862,32 @@ function appendMessage(role, text, thinking) {
   row.className = 'chat-msg ' + role;
 
   var avatar = createAvatar(role);
+  var content = document.createElement('div');
+  content.className = 'chat-msg-content';
+
+  var meta = document.createElement('div');
+  meta.className = 'chat-msg-meta';
+  var hh = String(now.getHours()).padStart(2,'0');
+  var mi = String(now.getMinutes()).padStart(2,'0');
+  var timeStr = hh + ':' + mi;
+  var nameStr = role === 'ai' ? 'Rhysel' : '你';
+  if (role === 'ai') {
+    meta.innerHTML = '<span class="chat-msg-name">' + nameStr + '</span><span class="chat-msg-time">' + timeStr + '</span>';
+  } else {
+    meta.innerHTML = '<span class="chat-msg-time">' + timeStr + '</span><span class="chat-msg-name">' + nameStr + '</span>';
+  }
+  content.appendChild(meta);
+
   var bubble = document.createElement('div');
   bubble.className = 'chat-bubble';
   bubble.innerHTML = escHtml(text);
+  content.appendChild(bubble);
 
   if (role === 'ai') {
     row.appendChild(avatar);
-    row.appendChild(bubble);
+    row.appendChild(content);
   } else {
-    row.appendChild(bubble);
+    row.appendChild(content);
     row.appendChild(avatar);
   }
 
