@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#faf6f2">
+<meta name="apple-mobile-web-app-title" content="Haven">
+<title>Haven</title>
+<link href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf6f2;
+  --bg-gradient: linear-gradient(165deg, #fdf9f5 0%, #f8f4ef 35%, #f5f0eb 65%, #faf6f2 100%);
+  --surface: rgba(255, 252, 248, 0.65);
+  --surface-solid: #faf6f2;
+  --border: rgba(200, 190, 170, 0.18);
+  --border-strong: rgba(180, 165, 145, 0.32);
+  --text: #5a4e44;
+  --text-dim: #8a7d72;
+  --text-light: #b8ad9e;
+  --accent: #8a7d72;
+  --accent-light: #a09588;
+  --accent-glow: rgba(138, 125, 114, 0.12);
+  --positive: #7B9E8B;
+  --negative: #BF8888;
+  --warning: #C4A878;
+  --shadow-light: rgba(255, 252, 248, 0.85);
+  --shadow-dark: rgba(165, 155, 140, 0.18);
+  --shadow-dark-subtle: rgba(165, 155, 140, 0.10);
+  --chat-user: #e8e0d4;
+  --chat-ai: rgba(255, 252, 248, 0.85);
+  --chat-thinking: rgba(180, 160, 200, 0.08);
+  --sidebar-w: 240px;
+  --dock-h: 72px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'LXGW WenKai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(1.5px 1.5px at 15% 25%, rgba(180,160,200,0.18) 50%, transparent 50%),
+    radial-gradient(1px 1px at 45% 15%, rgba(200,180,210,0.15) 50%, transparent 50%),
+    radial-gradient(1.2px 1.2px at 72% 38%, rgba(190,170,205,0.14) 50%, transparent 50%),
+    radial-gradient(1px 1px at 88% 62%, rgba(175,155,195,0.16) 50%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 28% 78%, rgba(185,165,200,0.13) 50%, transparent 50%),
+    radial-gradient(1px 1px at 55% 88%, rgba(195,175,210,0.15) 50%, transparent 50%);
+  pointer-events: none; z-index: 0;
+  animation: dustDrift 25s ease-in-out infinite alternate;
+}
+@keyframes dustDrift {
+  0% { opacity: 0.6; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-8px); }
+  100% { opacity: 0.7; transform: translateY(3px); }
+}
+
+/* ========== Splash Screen ========== */
+#splash {
+  position: fixed; inset: 0; z-index: 99999;
+  background: var(--bg-gradient);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#splash.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+.splash-title {
+  font-family: 'Crimson Pro', 'Cormorant Garamond', serif;
+  font-size: 42px; font-weight: 300; font-style: italic;
+  color: var(--accent); letter-spacing: 2px;
+  opacity: 0; animation: splashFadeIn 1.2s ease 0.3s forwards;
+}
+.splash-sub {
+  font-size: 13px; color: var(--text-light); margin-top: 8px;
+  letter-spacing: 4px;
+  opacity: 0; animation: splashFadeIn 1s ease 0.8s forwards;
+}
+.splash-line {
+  width: 40px; height: 1px; background: var(--border-strong);
+  margin-top: 20px;
+  opacity: 0; animation: splashFadeIn 0.8s ease 1.2s forwards;
+}
+@keyframes splashFadeIn {
+  to { opacity: 1; }
+}
+
+/* ========== Main Layout ========== */
+.app-container {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  z-index: 1;
+}
+
+/* ========== Page Views ========== */
+.page { display: none; flex: 1; overflow: hidden; position: relative; }
+.page.active { display: flex; flex-direction: column; }
+
+/* ========== Bottom Dock ========== */
+.dock {
+  position: relative; z-index: 100;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+  min-height: var(--dock-h);
+}
+.dock-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 6px 20px; cursor: pointer; border-radius: 20px;
+  transition: all 0.2s ease; position: relative;
+  -webkit-tap-highlight-color: transparent;
+  flex: 1;
+}
+.dock-item:hover { background: rgba(200,185,165,0.12); }
+.dock-item.active { background: var(--accent-glow); }
+.dock-icon {
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 2px;
+}
+.dock-icon svg { width: 20px; height: 20px; stroke: var(--text-dim); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.dock-item.active .dock-icon svg { stroke: var(--accent); }
+.dock-label {
+  font-size: 10px; font-weight: 400; color: var(--text-dim);
+  letter-spacing: 0.5px; white-space: nowrap;
+}
+.dock-item.active .dock-label { color: var(--accent); font-weight: 500; }
+
+/* ========== Chat Page ========== */
+.chat-page { display: flex; flex-direction: column; }
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 16px 16px 8px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.chat-msg {
+  display: flex; margin-bottom: 12px;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.chat-msg.user { justify-content: flex-end; }
+.chat-msg.ai { justify-content: flex-start; }
+.chat-bubble {
+  max-width: 80%; padding: 10px 14px;
+  border-radius: 18px; font-size: 15px; line-height: 1.6;
+  word-break: break-word;
+  box-shadow: 0 1px 4px var(--shadow-dark-subtle);
+}
+.chat-msg.user .chat-bubble {
+  background: var(--chat-user);
+  border-bottom-right-radius: 6px;
+}
+.chat-msg.ai .chat-bubble {
+  background: var(--chat-ai);
+  border-bottom-left-radius: 6px;
+}
+
+.chat-thinking {
+  max-width: 85%; margin-bottom: 8px;
+  padding: 8px 12px;
+  background: var(--chat-thinking);
+  border: 1px solid rgba(180,160,200,0.12);
+  border-radius: 12px;
+  font-size: 13px; color: var(--text-dim);
+  line-height: 1.5;
+  cursor: pointer;
+  position: relative;
+}
+.chat-thinking-header {
+  font-size: 11px; color: var(--text-light);
+  margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
+}
+.chat-thinking-body {
+  max-height: 60px; overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.chat-thinking.expanded .chat-thinking-body {
+  max-height: none;
+}
+
+.chat-input-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px calc(4px + env(safe-area-inset-bottom));
+  background: var(--surface); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+}
+.chat-input-actions {
+  display: flex; gap: 4px;
+}
+.chat-input-actions button {
+  width: 36px; height: 36px; border: none; background: none;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); transition: background 0.2s;
+}
+.chat-input-actions button:hover { background: var(--accent-glow); }
+.chat-input-actions button svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.chat-input {
+  flex: 1; border: 1px solid var(--border);
+  background: rgba(255,252,248,0.8); border-radius: 20px;
+  padding: 8px 16px; font-size: 15px; font-family: inherit;
+  color: var(--text); outline: none; resize: none;
+  max-height: 120px; line-height: 1.4;
+}
+.chat-input::placeholder { color: var(--text-light); }
+.chat-input:focus { border-color: var(--border-strong); }
+.chat-send {
+  width: 36px; height: 36px; border: none;
+  background: var(--accent); border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.2s;
+}
+.chat-send:hover { opacity: 0.85; }
+.chat-send svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ========== Home Page (Foyer) ========== */
+.home-page { display: flex; flex-direction: row; }
+.home-sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: rgba(255,252,248,0.75); backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 16px 0;
+  transition: transform 0.3s ease;
+  -webkit-overflow-scrolling: touch;
+}
+.home-sidebar-group {
+  padding: 0 16px; margin-bottom: 16px;
+}
+.home-sidebar-group-title {
+  font-size: 11px; color: var(--text-light); font-weight: 500;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 0 8px; margin-bottom: 6px;
+}
+.home-sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 12px;
+  cursor: pointer; transition: all 0.15s ease;
+  font-size: 14px; color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+.home-sidebar-item:hover { background: rgba(200,185,165,0.10); }
+.home-sidebar-item.active {
+  background: rgba(138,125,114,0.10);
+  color: var(--accent); font-weight: 500;
+}
+.home-sidebar-item svg {
+  width: 18px; height: 18px; stroke: currentColor; fill: none;
+  stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.home-content {
+  flex: 1; overflow-y: auto; padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.home-content-title {
+  font-family: 'Crimson Pro', serif;
+  font-size: 22px; font-weight: 400; color: var(--text);
+  margin-bottom: 16px;
+}
+.home-panel { display: none; }
+.home-panel.active { display: block; }
+
+.home-placeholder {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-light); font-size: 14px;
+}
+
+/* Mobile: sidebar becomes drawer */
+@media (max-width: 640px) {
+  .home-sidebar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    z-index: 50; width: 260px; min-width: 260px;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+  }
+  .home-sidebar.open { transform: translateX(0); }
+  .home-content { padding: 16px; }
+  .home-menu-btn { display: flex !important; }
+}
+@media (min-width: 641px) {
+  .home-menu-btn { display: none !important; }
+}
+
+.home-menu-btn {
+  position: absolute; top: 12px; left: 12px; z-index: 40;
+  width: 36px; height: 36px; border: 1px solid var(--border);
+  background: var(--surface); border-radius: 10px;
+  cursor: pointer; display: none; align-items: center; justify-content: center;
+}
+.home-menu-btn svg { width: 18px; height: 18px; stroke: var(--text-dim); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.sidebar-overlay {
+  display: none; position: absolute; inset: 0; z-index: 45;
+  background: rgba(0,0,0,0.15);
+}
+.sidebar-overlay.show { display: block; }
+
+/* ========== Terminal Page ========== */
+.term-page { display: flex; flex-direction: column; background: #1a1a1a; }
+.term-frame {
+  flex: 1; background: #1a1a1a; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.3); font-size: 14px;
+}
+.term-toolbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; background: #222;
+  border-top: 1px solid #333;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.term-btn {
+  padding: 6px 14px; border: 1px solid #444;
+  background: #2a2a2a; color: #ccc; border-radius: 8px;
+  font-size: 13px; font-family: 'SF Mono', 'Menlo', monospace;
+  cursor: pointer; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.term-btn:active { background: #444; }
+.term-tabs {
+  display: flex; gap: 0; background: #111; padding: 6px 8px;
+  border-bottom: 1px solid #333;
+}
+.term-tab {
+  padding: 5px 14px; font-size: 12px; color: #888;
+  cursor: pointer; border-radius: 6px; white-space: nowrap;
+  transition: all 0.15s;
+}
+.term-tab.active { background: #333; color: #f0c040; }
+
+/* ========== Settings Page ========== */
+.settings-page { overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+.settings-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; margin-bottom: 16px;
+}
+.settings-section-title {
+  font-size: 13px; font-weight: 500; color: var(--text-dim);
+  letter-spacing: 0.5px; margin-bottom: 12px;
+}
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label { font-size: 14px; color: var(--text); }
+.settings-row-desc { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.settings-toggle {
+  width: 44px; height: 26px; border-radius: 13px;
+  background: var(--border-strong); border: none; cursor: pointer;
+  position: relative; transition: background 0.2s;
+}
+.settings-toggle.on { background: var(--positive); }
+.settings-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.2s;
+}
+.settings-toggle.on::after { transform: translateX(18px); }
+
+/* ========== Group Chat Page (hidden by default) ========== */
+.page.group-page { }
+.group-placeholder {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  color: var(--text-light); font-size: 14px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splash">
+  <div class="splash-title">Haven</div>
+  <div class="splash-sub">OUR PLACE</div>
+  <div class="splash-line"></div>
+</div>
+
+<!-- App -->
+<div class="app-container">
+
+  <!-- Chat Page -->
+  <div id="page-chat" class="page chat-page active">
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-msg ai">
+        <div class="chat-bubble">Haven is live.</div>
+      </div>
+    </div>
+    <div class="chat-input-bar">
+      <div class="chat-input-actions">
+        <button title="附件" onclick="handleAttach()">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </button>
+        <button title="拍照" onclick="handleCamera()">
+          <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="3"/><circle cx="12" cy="13" r="4"/><path d="M8 6L9 3h6l1 3"/></svg>
+        </button>
+      </div>
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="说点什么..." onkeydown="handleChatKey(event)" oninput="autoGrow(this)"></textarea>
+      <button class="chat-send" onclick="sendMessage()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Home Page (Foyer) -->
+  <div id="page-home" class="page home-page">
+    <button class="home-menu-btn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="home-sidebar" id="home-sidebar">
+
+      <div class="home-sidebar-group">
+        <div class="home-sidebar-group-title">概览</div>
+        <div class="home-sidebar-item active" onclick="showPanel('dashboard')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          仪表盘
+        </div>
+      </div>
+
+      <div class="home-sidebar-group">
+        <div class="home-sidebar-group-title">记忆</div>
+        <div class="home-sidebar-item" onclick="showPanel('memory')">
+          <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 11-7 11S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          记忆库
+        </div>
+        <div class="home-sidebar-item" onclick="showPanel('dreams')">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          梦境
+        </div>
+        <div class="home-sidebar-item" onclick="showPanel('darkroom')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          暗房
+        </div>
+      </div>
+
+      <div class="home-sidebar-group">
+        <div class="home-sidebar-group-title">日常</div>
+        <div class="home-sidebar-item" onclick="showPanel('murmur')">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          碎碎念
+        </div>
+        <div class="home-sidebar-item" onclick="showPanel('crosstalk')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          Crosstalk
+        </div>
+        <div class="home-sidebar-item" onclick="showPanel('radio')">
+          <svg viewBox="0 0 24 24"><path d="M12 1v6M4.93 4.93l4.24 4.24M1 12h6M4.93 19.07l4.24-4.24"/><circle cx="12" cy="12" r="4"/></svg>
+          电台
+        </div>
+        <div class="home-sidebar-item" onclick="showPanel('desire')">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          心跳
+        </div>
+      </div>
+
+      <div class="home-sidebar-group">
+        <div class="home-sidebar-group-title">系统</div>
+        <div class="home-sidebar-item" onclick="showPanel('portrait')">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          画像
+        </div>
+        <div class="home-sidebar-item" onclick="showPanel('config')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          配置
+        </div>
+      </div>
+    </div>
+
+    <div class="home-content" id="home-content">
+      <div id="panel-dashboard" class="home-panel active">
+        <div class="home-content-title">仪表盘</div>
+        <div class="home-placeholder">仪表盘面板 — 待搭建</div>
+      </div>
+      <div id="panel-memory" class="home-panel">
+        <div class="home-content-title">记忆库</div>
+        <div class="home-placeholder">记忆库面板 — 待接入 OB API</div>
+      </div>
+      <div id="panel-dreams" class="home-panel">
+        <div class="home-content-title">梦境</div>
+        <div class="home-placeholder">梦境面板 — 待接入 OB API</div>
+      </div>
+      <div id="panel-darkroom" class="home-panel">
+        <div class="home-content-title">暗房</div>
+        <div class="home-placeholder">暗房面板 — 待接入 OB API</div>
+      </div>
+      <div id="panel-murmur" class="home-panel">
+        <div class="home-content-title">碎碎念</div>
+        <div class="home-placeholder">碎碎念面板 — 待接入 Supabase</div>
+      </div>
+      <div id="panel-crosstalk" class="home-panel">
+        <div class="home-content-title">Crosstalk</div>
+        <div class="home-placeholder">Crosstalk 面板 — 待接入 Supabase</div>
+      </div>
+      <div id="panel-radio" class="home-panel">
+        <div class="home-content-title">电台</div>
+        <div class="home-placeholder">电台面板 — 待搭建</div>
+      </div>
+      <div id="panel-desire" class="home-panel">
+        <div class="home-content-title">心跳</div>
+        <div class="home-placeholder">心跳面板 — 待接入 Desire API</div>
+      </div>
+      <div id="panel-portrait" class="home-panel">
+        <div class="home-content-title">画像</div>
+        <div class="home-placeholder">画像面板 — 待接入 OB API</div>
+      </div>
+      <div id="panel-config" class="home-panel">
+        <div class="home-content-title">配置</div>
+        <div class="home-placeholder">配置面板 — 待搭建</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal Page -->
+  <div id="page-term" class="page term-page">
+    <div class="term-tabs">
+      <div class="term-tab active">main</div>
+      <div class="term-tab">assistant</div>
+      <div class="term-tab">gemini</div>
+      <div class="term-tab">ghost</div>
+    </div>
+    <div class="term-frame" id="term-frame">
+      终端 — 待接入 WebSocket + xterm.js
+    </div>
+    <div class="term-toolbar">
+      <button class="term-btn">Esc</button>
+      <button class="term-btn">&uarr;</button>
+      <button class="term-btn">&uarr;&uarr;</button>
+      <button class="term-btn">&darr;</button>
+      <button class="term-btn">Enter</button>
+      <button class="term-btn">clear</button>
+    </div>
+  </div>
+
+  <!-- Settings Page -->
+  <div id="page-settings" class="page settings-page">
+    <div class="settings-section">
+      <div class="settings-section-title">显示</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">导航栏显示群聊</div>
+          <div class="settings-row-desc">开启后底部导航增加群聊入口</div>
+        </div>
+        <button class="settings-toggle" id="toggle-group" onclick="toggleGroupChat(this)"></button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">连接</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">服务器地址</div>
+          <div class="settings-row-desc" id="server-url-display">未配置</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title">关于</div>
+      <div class="settings-row">
+        <div>
+          <div class="settings-row-label">Haven</div>
+          <div class="settings-row-desc">v0.1 — Luna & Rhysel</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group Chat Page (hidden by default) -->
+  <div id="page-group" class="page group-page">
+    <div class="group-placeholder">群聊 — 待搭建</div>
+  </div>
+
+  <!-- Bottom Dock -->
+  <div class="dock" id="dock">
+    <div class="dock-item active" data-page="chat" onclick="switchPage('chat')">
+      <div class="dock-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <div class="dock-label">聊天</div>
+    </div>
+    <div class="dock-item" data-page="home" onclick="switchPage('home')">
+      <div class="dock-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="dock-label">家</div>
+    </div>
+    <div class="dock-item" data-page="term" onclick="switchPage('term')">
+      <div class="dock-icon">
+        <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      </div>
+      <div class="dock-label">终端</div>
+    </div>
+    <div class="dock-item" data-page="settings" onclick="switchPage('settings')">
+      <div class="dock-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <div class="dock-label">设置</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== Splash =====
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    document.getElementById('splash').classList.add('hide');
+  }, 2200);
+});
+
+// ===== Page Switching =====
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.dock-item').forEach(function(d) { d.classList.remove('active'); });
+  var page = document.getElementById('page-' + name);
+  if (page) page.classList.add('active');
+  var dock = document.querySelector('.dock-item[data-page="' + name + '"]');
+  if (dock) dock.classList.add('active');
+}
+
+// ===== Home Sidebar =====
+function showPanel(name) {
+  document.querySelectorAll('.home-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.home-sidebar-item').forEach(function(i) { i.classList.remove('active'); });
+  var panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (window.innerWidth <= 640) toggleSidebar();
+}
+
+function toggleSidebar() {
+  var sb = document.getElementById('home-sidebar');
+  var ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+
+// ===== Chat =====
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendMessage() {
+  var input = document.getElementById('chat-input');
+  var text = input.value.trim();
+  if (!text) return;
+  appendMessage('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+  // TODO: POST to CCC server
+}
+
+function appendMessage(role, text, thinking) {
+  var container = document.getElementById('chat-messages');
+  if (thinking) {
+    var div = document.createElement('div');
+    div.className = 'chat-thinking';
+    div.innerHTML = '<div class="chat-thinking-header">Thinking</div><div class="chat-thinking-body">' + escHtml(thinking) + '</div>';
+    div.onclick = function() { this.classList.toggle('expanded'); };
+    container.appendChild(div);
+  }
+  var msg = document.createElement('div');
+  msg.className = 'chat-msg ' + role;
+  msg.innerHTML = '<div class="chat-bubble">' + escHtml(text) + '</div>';
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function handleAttach() { /* TODO */ }
+function handleCamera() { /* TODO */ }
+
+// ===== Settings =====
+function toggleGroupChat(btn) {
+  btn.classList.toggle('on');
+  var show = btn.classList.contains('on');
+  var groupDock = document.querySelector('.dock-item[data-page="group"]');
+  if (show && !groupDock) {
+    var item = document.createElement('div');
+    item.className = 'dock-item';
+    item.setAttribute('data-page', 'group');
+    item.setAttribute('onclick', "switchPage('group')");
+    item.innerHTML = '<div class="dock-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="dock-label">群聊</div>';
+    var dock = document.getElementById('dock');
+    var settingsItem = dock.querySelector('[data-page="settings"]');
+    dock.insertBefore(item, settingsItem);
+  } else if (!show && groupDock) {
+    groupDock.remove();
+    var groupPage = document.getElementById('page-group');
+    if (groupPage.classList.contains('active')) switchPage('chat');
+  }
+}
+</script>
+
+</body>
+</html>
